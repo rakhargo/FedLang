@@ -1,0 +1,6 @@
+fedenv2/
+global_model_updated.safetensors
+.env
+utils/models
+local_training_*/gpt2
+local_training_*/output_client_*
