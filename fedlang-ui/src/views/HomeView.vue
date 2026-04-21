@@ -1,36 +1,28 @@
 <template>
-  <div class="row mt-4">
-    <div class="col-md-4">
-      <div class="card shadow-sm border-start border-primary border-4">
-        <div class="card-body">
-          <h6 class="text-muted">Round Status</h6>
-          <h3>Round 2</h3>
-        </div>
+  <div class="container py-5">
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <h2 class="fw-bold">Global Projects</h2>
+        <p class="text-muted">Explore collaborative AI training across the globe.</p>
       </div>
     </div>
-    <div class="col-md-4">
-      <div class="card shadow-sm border-start border-success border-4">
-        <div class="card-body">
-          <h6 class="text-muted">Participating Nodes</h6>
-          <h3>5 Nodes</h3>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <div class="row mt-4">
-    <div class="col-12">
-      <div class="card shadow-sm">
-        <div class="card-header bg-white font-weight-bold">Training Progress (GPT-2)</div>
-        <div class="card-body">
-          <div class="progress mb-3" style="height: 25px;">
-            <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 75%">75%</div>
-          </div>
-          <div class="bg-dark text-success p-3 rounded shadow-inner" style="font-family: monospace; font-size: 0.8rem;">
-            > [INFO] Loading local_model.safetensors... <br>
-            > [INFO] Epoch 1/5: Loss 0.4523 <br>
-            > [INFO] Epoch 2/5: Loss 0.3112 <br>
-            > [WAIT] Awaiting Blockchain Confirmation...
+    <div class="row g-4">
+      <div v-for="i in 3" :key="i" class="col-md-4">
+        <div class="card h-100 shadow-sm hover-shadow transition">
+          <div class="card-body">
+            <div class="d-flex justify-content-between mb-2">
+              <span class="badge bg-soft-primary text-primary">NLP</span>
+              <span class="text-muted small">Round 3/10</span>
+            </div>
+            <h5 class="card-title fw-bold">GPT-2 Indonesia Sentiment</h5>
+            <p class="card-text text-muted small">Fine-tuning GPT-2 untuk deteksi emosi pada teks Bahasa Indonesia.</p>
+            <div class="mt-4 pt-3 border-top">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="small fw-bold">5 Participants</span>
+                <router-link to="/project/1" class="btn btn-sm btn-primary">Join & View</router-link>
+              </div>
+            </div>
           </div>
         </div>
       </div>
