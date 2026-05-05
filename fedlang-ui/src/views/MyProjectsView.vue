@@ -23,7 +23,10 @@ const activeTab = ref('initiated')
     <div v-if="activeTab === 'initiated'" class="card shadow-sm border-0 p-4 text-center">
       <div class="py-5">
         <p class="text-muted">You haven't started any projects yet.</p>
-        <button class="btn btn-primary">+ Create New Project</button>
+        <!-- <button class="btn btn-primary">+ Create New Project</button> -->
+        <RouterLink to="/create" class="btn btn-primary">
+          <i class="bi bi-plus-lg me-2"></i> Create New Project
+        </RouterLink>
       </div>
     </div>
     

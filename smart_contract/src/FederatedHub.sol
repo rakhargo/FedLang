@@ -12,7 +12,9 @@ contract FederatedHub {
         string globalModelCID;
         uint256 roundNumber;
         bool isActive;
-        string metadata; 
+        string name;           
+        string description;    
+        string modelName;      
     }
 
     struct Contribution {
@@ -46,6 +48,7 @@ contract FederatedHub {
     event ParticipantJoined(uint256 indexed projectId, address indexed participant);
     event ContributionSubmitted(uint256 indexed projectId, uint256 indexed round, address indexed participant);
     event RoundFinalized(uint256 indexed projectId, uint256 indexed round, string newGlobalCID);
+    event ProjectFinalized(uint256 indexed projectId, uint256 finalRound, string finalModelCID);
 
     modifier onlyProjectInitiator(uint256 _projectId) {
         require(projects[_projectId].initiator == msg.sender, "Bukan inisiator proyek ini");
@@ -58,19 +61,26 @@ contract FederatedHub {
         participants[msg.sender].isRegistered = true;
     }
 
-    function createProject(string memory _initialModelCID, string memory _metadata) public {
+    function createProject(
+        string memory _initialModelCID, 
+        string memory _name, 
+        string memory _description, 
+        string memory _modelName
+    ) public {
+        require(participants[msg.sender].isRegistered, "Daftarkan DID Anda terlebih dahulu");
         projectCount++;
         projects[projectCount] = Project({
             initiator: msg.sender,
             globalModelCID: _initialModelCID,
             roundNumber: 1,
             isActive: true,
-            metadata: _metadata
+            name: _name,
+            description: _description,
+            modelName: _modelName
         });
 
         // Inisialisasi waktu mulai untuk Round 1
         projectRounds[projectCount][1].startTime = block.timestamp;
-
         emit ProjectCreated(projectCount, msg.sender, _initialModelCID);
     }
 
@@ -91,6 +101,7 @@ contract FederatedHub {
         bytes32 _contentHash,
         bytes memory _signature
     ) public {
+        require(projects[_projectId].isActive, "Proyek sudah tidak aktif");
         require(isRegistered[_projectId][msg.sender], "Belum bergabung");
         Project storage proj = projects[_projectId];
         uint256 curRound = proj.roundNumber;
@@ -123,6 +134,7 @@ contract FederatedHub {
     }
 
     function finalizeRound(uint256 _projectId, string memory _newGlobalModelCID) public onlyProjectInitiator(_projectId) {
+        require(projects[_projectId].isActive, "Proyek sudah tidak aktif");
         require(canAggregate(_projectId), "Syarat agregasi belum terpenuhi");
         
         Project storage proj = projects[_projectId];
@@ -136,5 +148,17 @@ contract FederatedHub {
         // Otomatis set waktu mulai untuk round berikutnya
         projectRounds[_projectId][proj.roundNumber].startTime = block.timestamp;
         emit RoundFinalized(_projectId, finishedRound, _newGlobalModelCID);
+    }
+
+    function finalizeProject(uint256 _projectId) public onlyProjectInitiator(_projectId) {
+        require(projects[_projectId].isActive, "Proyek sudah tidak aktif");
+        
+        projects[_projectId].isActive = false;
+        
+        emit ProjectFinalized(
+            _projectId, 
+            projects[_projectId].roundNumber, 
+            projects[_projectId].globalModelCID
+        );
     }
 }
