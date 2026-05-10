@@ -169,5 +169,62 @@ export const useWeb3Store = defineStore('web3', {
         this.isLoading = false;
       }
     },
+
+    async fetchProjectDetail(projectId) {
+      if (!this.contract) return null;
+      this.isLoading = true;
+      try {
+        const p = await this.contract.projects(projectId);
+        const roundData = await this.contract.projectRounds(projectId, p.roundNumber);
+        const isUserJoined = await this.contract.isRegistered(projectId, this.address);
+
+        return {
+          id: projectId,
+          initiator: p.initiator,
+          modelCID: p.globalModelCID,
+          name: p.name,
+          description: p.description,
+          modelName: p.modelName,
+          currentRound: p.roundNumber.toString(),
+          isActive: p.isActive,
+          submissionCount: roundData.submissionCount.toString(),
+          isUserJoined: isUserJoined
+        };
+      } catch (error) {
+        console.error("Gagal ambil detail proyek:", error);
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async doJoinProject(projectId) {
+      this.isLoading = true;
+      try {
+        const tx = await this.contract.joinProject(projectId);
+        await tx.wait();
+        alert("Berhasil bergabung ke proyek!");
+        return true;
+      } catch (error) {
+        alert(error.reason || "Gagal bergabung.");
+        return false;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async doFinalizeProject(projectId) {
+      this.isLoading = true;
+      try {
+        const tx = await this.contract.finalizeProject(projectId);
+        await tx.wait();
+        alert("Proyek telah difinalisasi!");
+        return true;
+      } catch (error) {
+        alert(error.reason || "Gagal finalisasi.");
+        return false;
+      } finally {
+        this.isLoading = false;
+      }
+    }
   }
 })

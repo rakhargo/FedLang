@@ -38,6 +38,7 @@ contract FederatedHub {
 
     mapping(address => Participant) public participants;
     mapping(uint256 => Project) public projects;
+
     mapping(uint256 => mapping(address => bool)) public isRegistered;
     // ProjectId => RoundNumber => Participant => Contribution
     mapping(uint256 => mapping(uint256 => mapping(address => Contribution))) public contributions;
@@ -88,6 +89,7 @@ contract FederatedHub {
         require(projects[_projectId].isActive, "Proyek tidak aktif");
         // Tambahan: Partisipan harus sudah punya DID sebelum gabung project
         require(participants[msg.sender].isRegistered, "Daftarkan DID Anda terlebih dahulu");
+        require(msg.sender != projects[_projectId].initiator, "Inisiator tidak boleh bergabung sebagai partisipan");
         require(!isRegistered[_projectId][msg.sender], "Sudah bergabung");
         
         isRegistered[_projectId][msg.sender] = true;
