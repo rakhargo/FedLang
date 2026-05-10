@@ -10,14 +10,25 @@ const projectName = ref('')
 const modelName = ref('')
 const description = ref('')
 const modelCID = ref('')
+const budget = ref('')
 
 const handleSubmit = async () => {
-    // console.log(modelCID.value, projectName.value, description.value, modelName.value)
-  const success = await web3Store.doCreateProject(modelCID.value, projectName.value, description.value, modelName.value)
-  if (success) {
-    router.push('/') // Kembali ke dashboard jika sukses
+  if (!budget.value || budget.value <= 0) {
+    alert("Silakan masukkan budget yang valid.");
+    return;
   }
+  
+  const success = await web3Store.doCreateProject(
+    modelCID.value, 
+    projectName.value, 
+    description.value, 
+    modelName.value, 
+    budget.value // Kirim budget
+  )
+  if (success) router.push('/')
+  // if (success) router.push('/my-projects')
 }
+
 </script>
 
 <template>
@@ -76,6 +87,22 @@ const handleSubmit = async () => {
                   >
                 </div>
                 <!-- <div class="form-text">Masukkan Hash konten dari model dasar (.safetensors) yang tersimpan di IPFS.</div> -->
+              </div>
+
+              <div class="mb-4">
+                <label class="form-label fw-bold">Project Budget (ETH)</label>
+                <div class="input-group">
+                  <input 
+                    v-model="budget" 
+                    type="number" 
+                    step="0.01" 
+                    class="form-control" 
+                    placeholder="e.g. 0.1" 
+                    required
+                  >
+                  <span class="input-group-text font-monospace">SEP ETH</span>
+                </div>
+                <div class="form-text">Dana ini akan dikunci di kontrak untuk insentif partisipan.</div>
               </div>
 
               <!-- Info Panel -->

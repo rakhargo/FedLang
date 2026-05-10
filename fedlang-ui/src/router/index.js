@@ -23,7 +23,7 @@ const router = createRouter({
     {
       path: '/submit/:id',
       name: 'submit-update',
-      component: () => import('../views/SubmitUpdate.vue'),
+      component: () => import('../views/SubmitUpdateView.vue'),
     },
     {
       path: '/create',

@@ -9,13 +9,13 @@ export const useWeb3Store = defineStore('web3', {
     did: null,
     isConnected: false,
     isLoading: false, // Indikator loading global
-    contractAddress: "0xf8d750191a2dFc3904b29dA5c5a836C4699DdD3B", 
+    contractAddress: "0x5d3763ADc9EFD4098279217584F66D554CD30f7B", 
     contract: null,
     isRegistered: false,
     // Chain ID Sepolia adalah 11155111
     requiredChainId: "0xaa36a7",
-
     projects: [],
+    userReward: "0",
   }),
   actions: {
     async connectWallet() {
@@ -144,27 +144,45 @@ export const useWeb3Store = defineStore('web3', {
       }
     },
 
-    async doCreateProject(modelCID, name, desc, modelName) {
+    // Fungsi cek saldo reward
+    async checkUserReward() {
+      if (!this.contract || !this.address) return;
+      const balance = await this.contract.rewards(this.address);
+      this.userReward = ethers.formatEther(balance);
+    },
+
+    async doCreateProject(modelCID, name, desc, modelName, budget) {
       if (!this.contract) return;
       this.isLoading = true;
       try {
-        // Memanggil fungsi createProject pada smart contract
-        console.log("function called");
-        console.log(modelCID, name, desc, modelName);
-        const tx = await this.contract.createProject(modelCID, name, desc, modelName);
-        
+        // Mengirim ETH sebagai budget proyek (payable)
+        const tx = await this.contract.createProject(modelCID, name, desc, modelName, {
+          value: ethers.parseEther(budget.toString()) 
+        });
         console.log("Mendaftarkan proyek ke Sepolia...", tx.hash);
-        
-        await tx.wait(); // Menunggu konfirmasi blok
-        alert("Proyek Berhasil Dibuat di Blockchain!");
-        
-        // Refresh daftar proyek setelah berhasil
-        await this.fetchProjects(); 
+        await tx.wait();
+        alert("Proyek Berhasil Dibuat dengan Budget!");
+
+        await this.fetchProjects();
         return true;
       } catch (error) {
         console.error("Gagal membuat proyek:", error);
         alert("Terjadi kesalahan saat membuat proyek.");
         return false;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async doWithdraw() {
+      this.isLoading = true;
+      try {
+        const tx = await this.contract.withdrawRewards();
+        await tx.wait();
+        await this.checkUserReward(); // Refresh saldo
+        alert("Reward berhasil ditarik ke wallet!");
+      } catch (error) {
+        alert("Gagal menarik reward.");
       } finally {
         this.isLoading = false;
       }
@@ -177,6 +195,9 @@ export const useWeb3Store = defineStore('web3', {
         const p = await this.contract.projects(projectId);
         const roundData = await this.contract.projectRounds(projectId, p.roundNumber);
         const isUserJoined = await this.contract.isRegistered(projectId, this.address);
+        
+        const contribution = await this.contract.contributions(projectId, p.roundNumber, this.address);
+        const hasSubmitted = contribution.exists; // Field 'exists' dari struct Contribution
 
         return {
           id: projectId,
@@ -188,7 +209,8 @@ export const useWeb3Store = defineStore('web3', {
           currentRound: p.roundNumber.toString(),
           isActive: p.isActive,
           submissionCount: roundData.submissionCount.toString(),
-          isUserJoined: isUserJoined
+          isUserJoined: isUserJoined,
+          hasSubmitted: hasSubmitted
         };
       } catch (error) {
         console.error("Gagal ambil detail proyek:", error);
@@ -206,6 +228,29 @@ export const useWeb3Store = defineStore('web3', {
         return true;
       } catch (error) {
         alert(error.reason || "Gagal bergabung.");
+        return false;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async doSubmitUpdate(projectId, cid, contentHash, signature) {
+      if (!this.contract) return;
+      this.isLoading = true;
+      try {
+        // Pastikan hash diawali 0x dan signature dalam format bytes (hex)
+        const tx = await this.contract.submitUpdate(
+          projectId, 
+          cid, 
+          contentHash, 
+          signature
+        );
+        await tx.wait();
+        alert("Submisi berhasil! Kontribusi Anda telah tercatat di blockchain.");
+        return true;
+      } catch (error) {
+        console.error("Gagal submit:", error);
+        alert(error.reason || "Gagal mengirim submisi ke blockchain.");
         return false;
       } finally {
         this.isLoading = false;

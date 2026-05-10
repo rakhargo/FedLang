@@ -1,31 +1,64 @@
 import time
 import json
 import torch
-import hashlib
 import os
-from web3 import Web3
 import requests
+from web3 import Web3
 from safetensors.torch import load_file, save_file
 from eth_account import Account
 from eth_account.messages import encode_defunct
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # === Konfigurasi ===
-RPC_URL = "http://127.0.0.1:8545" 
-CONTRACT_ADDRESS = "0x700b6A60ce7EaaEA56F065753d8dcB9653dbAD35" 
+RPC_URL = os.getenv("ANKR_SEPOLIA_RPC_URL") 
+CONTRACT_ADDRESS = "0x5d3763ADc9EFD4098279217584F66D554CD30f7B"
 PROJECT_ID = 1 
-PRIVATE_KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80" 
+PRIVATE_KEY = os.getenv("INIT_PRIVATE_KEY")
 ABI_PATH = "./FederatedHub.json" 
-
 IPFS_RPC_URL = "http://127.0.0.1:5001/api/v0"
 POLL_INTERVAL = 10 
 
-# === Setup Web3 & Contract ===
 w3 = Web3(Web3.HTTPProvider(RPC_URL))
 with open(ABI_PATH) as f:
-    json_data = json.load(f)
-    abi = json_data['abi']
+    abi = json.load(f)['abi']
 contract = w3.eth.contract(address=w3.to_checksum_address(CONTRACT_ADDRESS), abi=abi)
 account = w3.eth.account.from_key(PRIVATE_KEY)
+
+def evaluate_model_quality(file_path):
+    """
+    Simulasi evaluasi kualitas model (Bab 4: Mekanisme Adil).
+    Dalam riset asli, ini akan menguji model terhadap dataset validasi lokal.
+    Mengembalikan skor 0-100.
+    """
+    print(f"  [Eval] Mengevaluasi {file_path}...")
+    # Contoh logika: jika ukuran file valid, beri skor bagus
+    if os.path.getsize(file_path) > 0:
+        return 90 # Diasumsikan kualitasnya 90%
+    return 0
+
+def finalize_on_chain(new_cid, participants, scores):
+    """Memanggil finalizeRound dengan data reward."""
+    print(f"  [Blockchain] Mengirim finalisasi ronde ke Sepolia...")
+    nonce = w3.eth.get_transaction_count(account.address)
+    
+    # Kirim daftar address dan daftar skor secara paralel
+    tx = contract.functions.finalizeRound(
+        PROJECT_ID, 
+        new_cid, 
+        participants, 
+        scores
+    ).build_transaction({
+        'from': account.address,
+        'nonce': nonce,
+        'gas': 1000000, # Naikkan gas karena ada loop reward
+        'gasPrice': w3.eth.gas_price
+    })
+    
+    signed_tx = w3.eth.account.sign_transaction(tx, PRIVATE_KEY)
+    tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+    return w3.eth.wait_for_transaction_receipt(tx_hash)
 
 def verify_data_integrity(data_bytes, expected_hash_bytes):
     """Memverifikasi integritas data menggunakan Keccak256 (EVM Compatible)."""
@@ -109,78 +142,54 @@ def federated_averaging(model_paths):
     save_file(global_dict, output_path)
     return output_path
 
-def finalize_on_chain(new_cid):
-    """Memanggil fungsi finalizeRound di Smart Contract."""
-    nonce = w3.eth.get_transaction_count(account.address)
-    tx = contract.functions.finalizeRound(PROJECT_ID, new_cid).build_transaction({
-        'from': account.address,
-        'nonce': nonce,
-        'gas': 500000,
-        'gasPrice': w3.eth.gas_price
-    })
-    
-    signed_tx = w3.eth.account.sign_transaction(tx, PRIVATE_KEY)
-    tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
-    print(f"  [Blockchain] finalizeRound dikirim: {tx_hash.hex()}")
-    return w3.eth.wait_for_transaction_receipt(tx_hash)
-
 def main():
     print(f"Aggregator aktif untuk Project ID: {PROJECT_ID}")
-    
     while True:
-        ready = contract.functions.canAggregate(PROJECT_ID).call()
-        current_round = contract.functions.projects(PROJECT_ID).call()[2]
-        
-        if ready:
-            print(f"\n=== Memulai Agregasi untuk Round {current_round} ===")
-            model_files = []
+        try:
+            ready = contract.functions.canAggregate(PROJECT_ID).call()
+            proj_data = contract.functions.projects(PROJECT_ID).call()
+            current_round = proj_data[2]
             
-            logs = contract.events.ContributionSubmitted().get_logs(
-                from_block=0, 
-                argument_filters={'projectId': PROJECT_ID, 'round': current_round}
-            )
+            if ready:
+                print(f"\n=== Memulai Agregasi Round {current_round} ===")
+                model_files = []
+                valid_addresses = []
+                quality_scores = []
+                
+                logs = contract.events.ContributionSubmitted().get_logs(from_block=10826764)
+                # Filter manual logs untuk project dan round saat ini
+                current_logs = [l for l in logs if l.args.projectId == PROJECT_ID and l.args.round == current_round]
+
+                for log in current_logs:
+                    addr = log.args.participant
+                    contrib = contract.functions.contributions(PROJECT_ID, current_round, addr).call()
+                    
+                    # Verifikasi Identitas & Integritas
+                    if verify_did_signature(addr, contrib[1], contrib[2]):
+                        path = download_from_ipfs(contrib[0])
+                        if path and verify_data_integrity(open(path, "rb").read(), contrib[1]):
+                            # HITUNG SKOR KUALITAS
+                            score = evaluate_model_quality(path)
+                            
+                            model_files.append(path)
+                            valid_addresses.append(addr)
+                            quality_scores.append(score)
+                    
+                if len(model_files) >= 3:
+                    updated_model = federated_averaging(model_files)
+                    new_cid = upload_to_ipfs(updated_model)
+                    
+                    if new_cid:
+                        receipt = finalize_on_chain(new_cid, valid_addresses, quality_scores)
+                        print(f"  [Success] Ronde Selesai! TX: {receipt.transactionHash.hex()}")
+                
+                # Cleanup
+                for f in model_files: os.remove(f) if os.path.exists(f) else None
             
-            for log in logs:
-                participant_addr = log['args']['participant']
-                
-                # 3. Ambil detail dari mapping contributions (termasuk Signature)
-                # Return: (modelUpdateCID, contentHash, signature, timestamp, exists)
-                contrib = contract.functions.contributions(PROJECT_ID, current_round, participant_addr).call()
-                cid = contrib[0]
-                expected_hash = contrib[1]
-                signature = contrib[2] # bytes signature untuk DID
-                
-                # Tahap Verifikasi Ganda:
-                # A. Verifikasi Tanda Tangan (Identity Check)
-                if not verify_did_signature(participant_addr, expected_hash, signature):
-                    print(f"  [Audit Fail] Identitas tidak valid untuk {participant_addr}. Melewati...")
-                    continue
-
-                # B. Verifikasi Integritas File (Integritas Check)
-                file_path = download_from_ipfs(cid)
-                if file_path:
-                    with open(file_path, "rb") as f:
-                        if verify_data_integrity(f.read(), expected_hash):
-                            model_files.append(file_path)
-                            print(f"  [Success] Verified & Authenticated: {cid}")
-                        else:
-                            print(f"  [Audit Fail] Hash mismatch untuk: {cid}")
-                            if os.path.exists(file_path): os.remove(file_path)
-
-            if len(model_files) >= 3:
-                global_file = federated_averaging(model_files)
-                new_global_cid = upload_to_ipfs(global_file)
-                
-                if new_global_cid:
-                    finalize_on_chain(new_global_cid)
-                
-                for f in model_files: 
-                    if os.path.exists(f): os.remove(f)
             else:
-                print("Kontribusi valid tidak cukup untuk melakukan agregasi.")
-                
-        else:
-            print(f"Menunggu partisipan... (Round {current_round})", end="\r")
+                print(f"Menunggu partisipan... (Round {current_round})", end="\r")
+        except Exception as e:
+            print(f"\n  [Error] {e}")
             
         time.sleep(POLL_INTERVAL)
 

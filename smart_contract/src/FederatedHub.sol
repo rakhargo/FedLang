@@ -6,6 +6,8 @@ contract FederatedHub {
     uint256 public constant MIN_CLIENTS = 3; // dev
     // uint256 public constant MAX_WAIT_TIME = 600; // 10 menit
     uint256 public constant TOTAL_CLIENTS = 5; // cuma buat dev
+    uint256 public constant REWARD_PER_ROUND = 0.01 ether; // example
+    uint256 public constant REWARD_PER_CONTRIBUTION_MIN = 0.001 ether; // example
     
     struct Project {
         address initiator;
@@ -14,7 +16,8 @@ contract FederatedHub {
         bool isActive;
         string name;           
         string description;    
-        string modelName;      
+        string modelName;
+        uint256 totalBudget;      
     }
 
     struct Contribution {
@@ -38,6 +41,7 @@ contract FederatedHub {
 
     mapping(address => Participant) public participants;
     mapping(uint256 => Project) public projects;
+    mapping(address => uint256) public rewards; // saldo reward participants
 
     mapping(uint256 => mapping(address => bool)) public isRegistered;
     // ProjectId => RoundNumber => Participant => Contribution
@@ -67,8 +71,10 @@ contract FederatedHub {
         string memory _name, 
         string memory _description, 
         string memory _modelName
-    ) public {
+    ) public payable {
         require(participants[msg.sender].isRegistered, "Daftarkan DID Anda terlebih dahulu");
+        // require(msg.value >= REWARD_PER_ROUND * 5, "Budget minimal 5 ronde"); // tunggu established
+
         projectCount++;
         projects[projectCount] = Project({
             initiator: msg.sender,
@@ -77,19 +83,18 @@ contract FederatedHub {
             isActive: true,
             name: _name,
             description: _description,
-            modelName: _modelName
+            modelName: _modelName,
+            totalBudget: msg.value
         });
 
-        // Inisialisasi waktu mulai untuk Round 1
         projectRounds[projectCount][1].startTime = block.timestamp;
         emit ProjectCreated(projectCount, msg.sender, _initialModelCID);
     }
 
     function joinProject(uint256 _projectId) public {
         require(projects[_projectId].isActive, "Proyek tidak aktif");
-        // Tambahan: Partisipan harus sudah punya DID sebelum gabung project
         require(participants[msg.sender].isRegistered, "Daftarkan DID Anda terlebih dahulu");
-        require(msg.sender != projects[_projectId].initiator, "Inisiator tidak boleh bergabung sebagai partisipan");
+        require(msg.sender != projects[_projectId].initiator, "Inisiator tidak boleh bergabung");
         require(!isRegistered[_projectId][msg.sender], "Sudah bergabung");
         
         isRegistered[_projectId][msg.sender] = true;
@@ -105,9 +110,8 @@ contract FederatedHub {
     ) public {
         require(projects[_projectId].isActive, "Proyek sudah tidak aktif");
         require(isRegistered[_projectId][msg.sender], "Belum bergabung");
-        Project storage proj = projects[_projectId];
-        uint256 curRound = proj.roundNumber;
         
+        uint256 curRound = projects[_projectId].roundNumber;
         require(!contributions[_projectId][curRound][msg.sender].exists, "Sudah submit di round ini");
 
         contributions[_projectId][curRound][msg.sender] = Contribution({
@@ -135,21 +139,43 @@ contract FederatedHub {
         return isFullHouse || hasMinQuota;
     }
 
-    function finalizeRound(uint256 _projectId, string memory _newGlobalModelCID) public onlyProjectInitiator(_projectId) {
-        require(projects[_projectId].isActive, "Proyek sudah tidak aktif");
+    function finalizeRound(
+        uint256 _projectId, 
+        string memory _newGlobalModelCID, 
+        address[] memory _participants, 
+        uint256[] memory _scores
+    ) public onlyProjectInitiator(_projectId) {
+        require(projects[_projectId].isActive, "Proyek tidak aktif");
+        require(_participants.length == _scores.length, "Data tidak sinkron");
         require(canAggregate(_projectId), "Syarat agregasi belum terpenuhi");
         
         Project storage proj = projects[_projectId];
         uint256 finishedRound = proj.roundNumber;
+
+        // Distribusi Reward
+        for (uint256 i = 0; i < _participants.length; i++) {
+            if (_scores[i] > 0) {
+                // Skor 100 berarti dapat full porsi dari REWARD_PER_ROUND / jumlah partisipan
+                // Atau bisa juga REWARD_PER_ROUND * score / 100 jika score adalah persentase performa
+                uint256 participantReward = (REWARD_PER_ROUND * _scores[i]) / 100;
+                rewards[_participants[i]] += participantReward;
+            }
+        }
         
         projectRounds[_projectId][finishedRound].finalized = true;
-        
         proj.globalModelCID = _newGlobalModelCID;
         proj.roundNumber++;
 
-        // Otomatis set waktu mulai untuk round berikutnya
         projectRounds[_projectId][proj.roundNumber].startTime = block.timestamp;
         emit RoundFinalized(_projectId, finishedRound, _newGlobalModelCID);
+    }
+
+    function withdrawRewards() public {
+        uint256 amount = rewards[msg.sender];
+        require(amount > 0, "Tidak ada saldo reward");
+        rewards[msg.sender] = 0;
+        (bool success, ) = payable(msg.sender).call{value: amount}("");
+        require(success, "Transfer gagal");
     }
 
     function finalizeProject(uint256 _projectId) public onlyProjectInitiator(_projectId) {
@@ -163,4 +189,5 @@ contract FederatedHub {
             projects[_projectId].globalModelCID
         );
     }
+    
 }

@@ -37,5 +37,19 @@ const web3Store = useWeb3Store()
     <div v-else class="mt-auto p-3 bg-dark border border-secondary rounded text-center">
       <small class="text-muted small">Connect wallet to see DID</small>
     </div>
+
+    <div v-if="web3Store.isRegistered" class="mt-3 p-3 bg-primary bg-opacity-10 rounded border border-primary border-opacity-25">
+      <small class="text-primary fw-bold d-block mb-1">CLAIMABLE REWARD</small>
+      <div class="d-flex justify-content-between align-items-center">
+        <span class="fw-bold text-white">{{ web3Store.userReward }} ETH</span>
+        <button 
+          v-if="parseFloat(web3Store.userReward) > 0"
+          @click="web3Store.doWithdraw" 
+          class="btn btn-primary btn-sm py-0 px-2 small"
+        >
+          Claim
+        </button>
+      </div>
+    </div>
   </nav>
 </template>

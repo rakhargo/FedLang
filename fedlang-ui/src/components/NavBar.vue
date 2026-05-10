@@ -8,7 +8,7 @@ const web3Store = useWeb3Store()
   style="z-index: 1020;">
     <div class="d-flex flex-column">
       <span class="text-muted small fw-medium">Network: <b class="text-primary">Sepolia Testnet</b></span>
-      <small class="text-secondary extra-small text-truncate" style="max-width: 200px;">SC: {{ web3Store.contractAddress }}</small>
+      <small class="text-secondary extra-small" style="max-width: 200px;">{{ web3Store.contractAddress }}</small>
     </div>
 
     <!-- WALLET BUTTON -->
