@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import bs58 from 'bs58'
 import { ethers } from 'ethers'
-import contractAbi from '../assets/FederatedHub.json' // Sesuaikan path-nya
+import contractAbi from '../assets/FederatedHub.json'
 
 export const useWeb3Store = defineStore('web3', {
   state: () => ({
@@ -9,7 +9,7 @@ export const useWeb3Store = defineStore('web3', {
     did: null,
     isConnected: false,
     isLoading: false, // Indikator loading global
-    contractAddress: "0x5d3763ADc9EFD4098279217584F66D554CD30f7B", 
+    contractAddress: "0xCa712f543959a23C8b9CE0d5C408C7541B0c615c", 
     contract: null,
     isRegistered: false,
     // Chain ID Sepolia adalah 11155111
@@ -210,7 +210,9 @@ export const useWeb3Store = defineStore('web3', {
           isActive: p.isActive,
           submissionCount: roundData.submissionCount.toString(),
           isUserJoined: isUserJoined,
-          hasSubmitted: hasSubmitted
+          hasSubmitted: hasSubmitted,
+          totalBudget: ethers.formatEther(p.totalBudget),
+          remainingBudget: ethers.formatEther(p.remainingBudget),
         };
       } catch (error) {
         console.error("Gagal ambil detail proyek:", error);

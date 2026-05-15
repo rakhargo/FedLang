@@ -7,7 +7,7 @@ contract FederatedHub {
     // uint256 public constant MAX_WAIT_TIME = 600; // 10 menit
     uint256 public constant TOTAL_CLIENTS = 5; // cuma buat dev
     uint256 public constant REWARD_PER_ROUND = 0.01 ether; // example
-    uint256 public constant REWARD_PER_CONTRIBUTION_MIN = 0.001 ether; // example
+    // uint256 public constant REWARD_PER_CONTRIBUTION_MIN = 0.001 ether; // example
     
     struct Project {
         address initiator;
@@ -17,7 +17,8 @@ contract FederatedHub {
         string name;           
         string description;    
         string modelName;
-        uint256 totalBudget;      
+        uint256 totalBudget;
+        uint256 remainingBudget;      
     }
 
     struct Contribution {
@@ -54,6 +55,7 @@ contract FederatedHub {
     event ContributionSubmitted(uint256 indexed projectId, uint256 indexed round, address indexed participant);
     event RoundFinalized(uint256 indexed projectId, uint256 indexed round, string newGlobalCID);
     event ProjectFinalized(uint256 indexed projectId, uint256 finalRound, string finalModelCID);
+    event RefundSent(uint256 indexed projectId, address indexed initiator, uint256 amount);
 
     modifier onlyProjectInitiator(uint256 _projectId) {
         require(projects[_projectId].initiator == msg.sender, "Bukan inisiator proyek ini");
@@ -84,7 +86,8 @@ contract FederatedHub {
             name: _name,
             description: _description,
             modelName: _modelName,
-            totalBudget: msg.value
+            totalBudget: msg.value,
+            remainingBudget: msg.value
         });
 
         projectRounds[projectCount][1].startTime = block.timestamp;
@@ -151,17 +154,26 @@ contract FederatedHub {
         
         Project storage proj = projects[_projectId];
         uint256 finishedRound = proj.roundNumber;
+        uint256 totalRewardThisRound = 0;
+        uint256 totalScoreInRound = 0;
+
+        for (uint256 i = 0; i < _scores.length; i++) {
+            totalScoreInRound += _scores[i];
+        }
 
         // Distribusi Reward
         for (uint256 i = 0; i < _participants.length; i++) {
             if (_scores[i] > 0) {
-                // Skor 100 berarti dapat full porsi dari REWARD_PER_ROUND / jumlah partisipan
-                // Atau bisa juga REWARD_PER_ROUND * score / 100 jika score adalah persentase performa
-                uint256 participantReward = (REWARD_PER_ROUND * _scores[i]) / 100;
+                // Reward = (Jatah per ronde * skor individu) / total skor ronde
+                uint256 participantReward = (REWARD_PER_ROUND * _scores[i]) / totalScoreInRound;
+                totalRewardThisRound += participantReward;
                 rewards[_participants[i]] += participantReward;
             }
         }
         
+        require(proj.remainingBudget >= totalRewardThisRound, "Budget proyek tidak mencukupi!");
+        proj.remainingBudget -= totalRewardThisRound;
+
         projectRounds[_projectId][finishedRound].finalized = true;
         proj.globalModelCID = _newGlobalModelCID;
         proj.roundNumber++;
@@ -179,15 +191,20 @@ contract FederatedHub {
     }
 
     function finalizeProject(uint256 _projectId) public onlyProjectInitiator(_projectId) {
-        require(projects[_projectId].isActive, "Proyek sudah tidak aktif");
+        Project storage proj = projects[_projectId];
+        require(proj.isActive, "Proyek sudah tidak aktif");
+
+        uint256 refundAmount = proj.remainingBudget; // Ambil sisa dana
+        proj.remainingBudget = 0; // Reset sisa dana di kontrak
+        proj.isActive = false; // Nonaktifkan proyek
         
-        projects[_projectId].isActive = false;
-        
-        emit ProjectFinalized(
-            _projectId, 
-            projects[_projectId].roundNumber, 
-            projects[_projectId].globalModelCID
-        );
+        if (refundAmount > 0) {
+            (bool success, ) = payable(proj.initiator).call{value: refundAmount}("");
+            require(success, "Refund gagal");
+            emit RefundSent(_projectId, proj.initiator, refundAmount);
+        }
+
+        emit ProjectFinalized(_projectId, proj.roundNumber, proj.globalModelCID);
     }
     
 }

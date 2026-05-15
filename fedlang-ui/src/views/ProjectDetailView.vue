@@ -72,25 +72,25 @@ watch(() => web3Store.contract, (newVal) => {
       <div class="col-lg-8">
         <div class="card border-0 shadow-sm mb-4">
           <div class="card-body p-4">
-            <h5 class="fw-bold mb-3">Research Overview</h5>
+            <h5 class="fw-bold mb-3">Project Description</h5>
             <p class="text-dark">{{ project.description }}</p>
             <hr class="my-4">
             <div class="row text-center">
-              <div class="col-3 border-end">
+              <div class="col border-end">
                 <small class="text-muted d-block text-uppercase extra-small fw-bold">Current Round</small>
                 <span class="fs-4 fw-bold text-primary">{{ project.currentRound }}</span>
               </div>
-              <div class="col-3 border-end">
+              <div class="col border-end">
                 <small class="text-muted d-block text-uppercase extra-small fw-bold">Submissions</small>
                 <span class="fs-4 fw-bold text-primary">{{ project.submissionCount }} / 3</span>
               </div>
-              <div class="col-3 border-end">
-                <small class="text-muted d-block text-uppercase extra-small fw-bold">Project Budget</small>
-                <span class="fs-4 fw-bold text-success">{{ project.totalBudget }} ETH</span>
-              </div>
-              <div class="col-3">
-                <small class="text-muted d-block text-uppercase extra-small fw-bold">Network</small>
-                <span class="badge bg-light text-dark border mt-1">Sepolia</span>
+              <div class="col ">
+                <small class="text-muted d-block text-uppercase extra-small fw-bold">Project Funds (Total / Remaining)</small>
+                <div class="d-flex justify-content-center align-items-baseline gap-2">
+                  <span class="fs-4 fw-bold text-dark">{{ project.totalBudget }}</span>
+                  <span class="text-muted">/</span>
+                  <span class="fs-4 fw-bold text-success">{{ project.remainingBudget }} ETH</span>
+                </div>
               </div>
             </div>
           </div>
