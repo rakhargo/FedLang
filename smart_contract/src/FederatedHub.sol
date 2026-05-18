@@ -2,12 +2,13 @@
 pragma solidity ^0.8.13;
 
 contract FederatedHub {
+    address public platformAdmin; // Mewakili Tim FedLang selaku Deployer Platform
+    mapping(string => address) public didToAddress; // Memastikan 1 DID hanya diklaim 1 wallet (Anti-Sybil)
+
     uint256 public projectCount;
     uint256 public constant MIN_CLIENTS = 3; // dev
-    // uint256 public constant MAX_WAIT_TIME = 600; // 10 menit
     uint256 public constant TOTAL_CLIENTS = 5; // cuma buat dev
     uint256 public constant REWARD_PER_ROUND = 0.01 ether; // example
-    // uint256 public constant REWARD_PER_CONTRIBUTION_MIN = 0.001 ether; // example
     
     struct Project {
         address initiator;
@@ -22,7 +23,7 @@ contract FederatedHub {
     }
 
     struct Contribution {
-        string modelUpdateCID;
+        string modelUpdateCID; // Berisi CID JSON Metadata (Model CID + Berkas VC)
         bytes32 contentHash;
         bytes signature;
         uint256 timestamp;
@@ -38,6 +39,7 @@ contract FederatedHub {
     struct Participant {
         string did; // Menyimpan identifier did:key:z6M...
         bool isRegistered;
+        bool isVerified; // TAMBAHAN: Status verifikasi global oleh Tim FedLang (Issuer Gate)
     }
 
     mapping(address => Participant) public participants;
@@ -56,16 +58,43 @@ contract FederatedHub {
     event RoundFinalized(uint256 indexed projectId, uint256 indexed round, string newGlobalCID);
     event ProjectFinalized(uint256 indexed projectId, uint256 finalRound, string finalModelCID);
     event RefundSent(uint256 indexed projectId, address indexed initiator, uint256 amount);
+    event DIDPlatformVerified(address indexed participant, string did);
 
     modifier onlyProjectInitiator(uint256 _projectId) {
         require(projects[_projectId].initiator == msg.sender, "Bukan inisiator proyek ini");
         _;
     }
 
-    // Registrasi DID menggunakan format did:key (Algoritmik)
+    modifier onlyPlatformAdmin() {
+        require(msg.sender == platformAdmin, "Hanya Tim FedLang yang dapat mengeksekusi ini");
+        _;
+    }
+
+    // CONSTRUCTOR: Menetapkan Tim FedLang saat pertama kali deploy
+    constructor() {
+        platformAdmin = msg.sender;
+    }
+
     function registerDID(string memory _did) public {
+        require(bytes(_did).length > 0, "String DID tidak boleh kosong");
+        require(!participants[msg.sender].isRegistered, "Wallet Anda sudah memiliki DID terdaftar");
+        require(didToAddress[_did] == address(0), "DID ini sudah diklaim oleh wallet lain");
+
         participants[msg.sender].did = _did;
         participants[msg.sender].isRegistered = true;
+        didToAddress[_did] = msg.sender; // Mengunci kepemilikan DID ke wallet pengirim (Anti-Sybil)
+    }
+
+    /**
+     * @dev Berperan sebagai sistem penyaring eksternal. Tim FedLang memverifikasi 
+     * profil partisipan secara off-chain dan memberikan validasi on-chain di tingkat platform.
+     */
+    function verifyParticipant(address _participant) public onlyPlatformAdmin {
+        require(participants[_participant].isRegistered, "Partisipan belum mendaftarkan DID");
+        require(!participants[_participant].isVerified, "Partisipan sudah terverifikasi");
+        
+        participants[_participant].isVerified = true;
+        emit DIDPlatformVerified(_participant, participants[_participant].did);
     }
 
     function createProject(
@@ -75,7 +104,7 @@ contract FederatedHub {
         string memory _modelName
     ) public payable {
         require(participants[msg.sender].isRegistered, "Daftarkan DID Anda terlebih dahulu");
-        // require(msg.value >= REWARD_PER_ROUND * 5, "Budget minimal 5 ronde"); // tunggu established
+        require(participants[msg.sender].isVerified, "DID Anda belum diverifikasi oleh Tim FedLang"); // Proteksi Platform
 
         projectCount++;
         projects[projectCount] = Project({
@@ -97,6 +126,7 @@ contract FederatedHub {
     function joinProject(uint256 _projectId) public {
         require(projects[_projectId].isActive, "Proyek tidak aktif");
         require(participants[msg.sender].isRegistered, "Daftarkan DID Anda terlebih dahulu");
+        require(participants[msg.sender].isVerified, "DID Anda belum diverifikasi oleh Tim FedLang"); // Proteksi Platform
         require(msg.sender != projects[_projectId].initiator, "Inisiator tidak boleh bergabung");
         require(!isRegistered[_projectId][msg.sender], "Sudah bergabung");
         
@@ -104,15 +134,15 @@ contract FederatedHub {
         emit ParticipantJoined(_projectId, msg.sender);
     }
 
-    // Fungsi Submit dengan Signature untuk verifikasi identitas di sisi Aggregator
     function submitUpdate(
         uint256 _projectId, 
-        string memory _modelUpdateCID, 
+        string memory _modelUpdateCID, // Diisi CID JSON Metadata (Mengandung tautan model & klaim VC)
         bytes32 _contentHash,
         bytes memory _signature
     ) public {
         require(projects[_projectId].isActive, "Proyek sudah tidak aktif");
         require(isRegistered[_projectId][msg.sender], "Belum bergabung");
+        require(participants[msg.sender].isVerified, "Identitas platform Anda tidak valid"); // Proteksi Platform
         
         uint256 curRound = projects[_projectId].roundNumber;
         require(!contributions[_projectId][curRound][msg.sender].exists, "Sudah submit di round ini");
@@ -129,16 +159,13 @@ contract FederatedHub {
         emit ContributionSubmitted(_projectId, curRound, msg.sender);
     }
 
-    // Mengecek apakah agregasi sudah boleh dilakukan
     function canAggregate(uint256 _projectId) public view returns (bool) {
         Project storage proj = projects[_projectId];
         Round storage r = projectRounds[_projectId][proj.roundNumber];
         
-        // bool timeIsUp = block.timestamp >= r.startTime + MAX_WAIT_TIME;
         bool hasMinQuota = r.submissionCount >= MIN_CLIENTS;
-        bool isFullHouse = r.submissionCount >= TOTAL_CLIENTS; // cuma buat dev
+        bool isFullHouse = r.submissionCount >= TOTAL_CLIENTS;
 
-        // return isFullHouse || (hasMinQuota && timeIsUp); // 5 atau min quota dan time is up
         return isFullHouse || hasMinQuota;
     }
 
@@ -161,10 +188,8 @@ contract FederatedHub {
             totalScoreInRound += _scores[i];
         }
 
-        // Distribusi Reward
         for (uint256 i = 0; i < _participants.length; i++) {
             if (_scores[i] > 0) {
-                // Reward = (Jatah per ronde * skor individu) / total skor ronde
                 uint256 participantReward = (REWARD_PER_ROUND * _scores[i]) / totalScoreInRound;
                 totalRewardThisRound += participantReward;
                 rewards[_participants[i]] += participantReward;
@@ -194,9 +219,9 @@ contract FederatedHub {
         Project storage proj = projects[_projectId];
         require(proj.isActive, "Proyek sudah tidak aktif");
 
-        uint256 refundAmount = proj.remainingBudget; // Ambil sisa dana
-        proj.remainingBudget = 0; // Reset sisa dana di kontrak
-        proj.isActive = false; // Nonaktifkan proyek
+        uint256 refundAmount = proj.remainingBudget;
+        proj.remainingBudget = 0;
+        proj.isActive = false;
         
         if (refundAmount > 0) {
             (bool success, ) = payable(proj.initiator).call{value: refundAmount}("");
@@ -206,5 +231,4 @@ contract FederatedHub {
 
         emit ProjectFinalized(_projectId, proj.roundNumber, proj.globalModelCID);
     }
-    
 }

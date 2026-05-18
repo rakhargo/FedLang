@@ -74,14 +74,15 @@ const handleSubmit = async () => {
               </div>
 
               <div class="mb-3">
-                <label class="form-label small fw-bold">MODEL CID (IPFS)</label>
-                <input v-model="modelCID" type="text" class="form-control" placeholder="Qm..." required :disabled="isSigned">
+                <label class="form-label small fw-bold">SUBMISSION PACKAGE CID (IPFS)</label>
+                <input v-model="modelCID" type="text" class="form-control" placeholder="QmPaketGabungan..." required :disabled="isSigned">
+                <div class="form-text extra-small text-primary">Masukkan Package CID (Kombinasi Model + VC) dari skrip Python.</div>
               </div>
 
               <div class="mb-3">
                 <label class="form-label small fw-bold">CONTENT HASH (Keccak256)</label>
                 <input v-model="contentHash" type="text" class="form-control" placeholder="0x..." required :disabled="isSigned">
-                <div class="form-text extra-small text-primary">Dapatkan dari output skrip Python pelatihan Anda.</div>
+                <div class="form-text extra-small text-primary">Masukkan data Hash Hex dari skrip Python.</div>
               </div>
 
               <div v-if="isSigned" class="mb-3 p-3 bg-light border rounded">

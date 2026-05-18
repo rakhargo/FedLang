@@ -27,13 +27,19 @@ const web3Store = useWeb3Store()
       <small class="text-info fw-bold d-block mb-1 text-uppercase small" style="letter-spacing: 1px;">Identity</small>
       <code class="text-light d-block mb-2" style="font-size: 0.7rem;">{{ web3Store.did }}</code>
       
-      <span v-if="web3Store.isRegistered" class="badge bg-success w-100 py-2 small">
+      <span v-if="web3Store.isRegistered && web3Store.isVerified" class="badge bg-success w-100 py-2 small">
         <i class="bi bi-patch-check-fill me-1"></i> Verified
       </span>
+
+      <span v-else-if="web3Store.isRegistered && !web3Store.isVerified" class="badge bg-warning text-dark w-100 py-2 small fw-bold animate-pulse">
+        <i class="bi bi-clock-history me-1"></i> Pending Verification
+      </span>
+
       <button v-else @click="web3Store.doRegisterDID" class="btn btn-warning btn-sm w-100 fw-bold shadow-sm">
         Register DID
       </button>
     </div>
+
     <div v-else class="mt-auto p-3 bg-dark border border-secondary rounded text-center">
       <small class="text-muted small">Connect wallet to see DID</small>
     </div>

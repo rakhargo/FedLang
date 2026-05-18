@@ -6,14 +6,14 @@ import contractAbi from '../assets/FederatedHub.json'
 export const useWeb3Store = defineStore('web3', {
   state: () => ({
     address: null,
-    did: null,
     isConnected: false,
     isLoading: false, // Indikator loading global
-    contractAddress: "0xCa712f543959a23C8b9CE0d5C408C7541B0c615c", 
+    contractAddress: "0xAc4f998dC647f8dBA4Ad9b6Bd5F0C1F3a83EA33b", 
     contract: null,
+    did: null,
     isRegistered: false,
-    // Chain ID Sepolia adalah 11155111
-    requiredChainId: "0xaa36a7",
+    isVerified: false,
+    requiredChainId: "0xaa36a7", // Chain ID Sepolia adalah 11155111
     projects: [],
     userReward: "0",
   }),
@@ -57,6 +57,7 @@ export const useWeb3Store = defineStore('web3', {
       this.did = null
       this.isConnected = false
       this.isRegistered = false
+      this.isVerified = false
       this.contract = null
       // Catatan: Secara teknis MetaMask tidak bisa "diputus" paksa dari JS, 
       // tapi kita menghapus jejaknya dari state aplikasi kita agar seamless.
@@ -67,8 +68,9 @@ export const useWeb3Store = defineStore('web3', {
       // this.isLoading = true
       try {
         const participant = await this.contract.participants(this.address)
-        this.isRegistered = participant.isRegistered
         this.did = participant.did
+        this.isRegistered = participant.isRegistered
+        this.isVerified = participant.isVerified
       } catch (e) {
         console.error("Gagal cek status DID", e)
       } 
