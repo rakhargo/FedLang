@@ -24,7 +24,7 @@ export const useWeb3Store = defineStore('web3', {
 
       const chainId = await window.ethereum.request({ method: 'eth_chainId' });
         if (chainId !== this.requiredChainId) {
-          alert("Harap pindah network MetaMask ke Sepolia!");
+          alert("Please switch MetaMask to Sepolia network.");
           return;
         }
 
@@ -72,7 +72,7 @@ export const useWeb3Store = defineStore('web3', {
         this.isRegistered = participant.isRegistered
         this.isVerified = participant.isVerified
       } catch (e) {
-        console.error("Gagal cek status DID", e)
+        console.error("Failed to check DID status", e)
       } 
       // finally {
       //   this.isLoading = false
@@ -109,9 +109,9 @@ export const useWeb3Store = defineStore('web3', {
         await tx.wait();
         
         this.isRegistered = true;
-        alert(`Sukses! DID terdaftar: ${calculatedDid}`);
+        alert(`DID registered: ${calculatedDid}`);
       } catch (error) {
-          console.error("Registrasi gagal:", error);
+          console.error("Registration failed:", error);
       } finally {
         this.isLoading = false;
       }
@@ -140,7 +140,7 @@ export const useWeb3Store = defineStore('web3', {
         }
         this.projects = tempProjects;
       } catch (error) {
-        console.error("Gagal mengambil daftar proyek:", error);
+        console.error("Failed to fetch projects:", error);
       } finally {
         this.isLoading = false;
       }
@@ -163,13 +163,13 @@ export const useWeb3Store = defineStore('web3', {
         });
         console.log("Mendaftarkan proyek ke Sepolia...", tx.hash);
         await tx.wait();
-        alert("Proyek Berhasil Dibuat dengan Budget!");
+        alert("Project created successfully!");
 
         await this.fetchProjects();
         return true;
       } catch (error) {
-        console.error("Gagal membuat proyek:", error);
-        alert("Terjadi kesalahan saat membuat proyek.");
+        console.error("Failed to create project:", error);
+        alert("Failed to create project.");
         return false;
       } finally {
         this.isLoading = false;
@@ -182,9 +182,9 @@ export const useWeb3Store = defineStore('web3', {
         const tx = await this.contract.withdrawRewards();
         await tx.wait();
         await this.checkUserReward(); // Refresh saldo
-        alert("Reward berhasil ditarik ke wallet!");
+        alert("Rewards withdrawn to wallet!");
       } catch (error) {
-        alert("Gagal menarik reward.");
+        alert("Failed to withdraw rewards.");
       } finally {
         this.isLoading = false;
       }
@@ -217,7 +217,7 @@ export const useWeb3Store = defineStore('web3', {
           remainingBudget: ethers.formatEther(p.remainingBudget),
         };
       } catch (error) {
-        console.error("Gagal ambil detail proyek:", error);
+        console.error("Failed to fetch project detail:", error);
       } finally {
         this.isLoading = false;
       }
@@ -228,10 +228,10 @@ export const useWeb3Store = defineStore('web3', {
       try {
         const tx = await this.contract.joinProject(projectId);
         await tx.wait();
-        alert("Berhasil bergabung ke proyek!");
+        alert("Successfully joined the project!");
         return true;
       } catch (error) {
-        alert(error.reason || "Gagal bergabung.");
+        alert(error.reason || "Failed to join.");
         return false;
       } finally {
         this.isLoading = false;
@@ -250,11 +250,11 @@ export const useWeb3Store = defineStore('web3', {
           signature
         );
         await tx.wait();
-        alert("Submisi berhasil! Kontribusi Anda telah tercatat di blockchain.");
+        alert("Submission successful! Your contribution has been recorded on blockchain.");
         return true;
       } catch (error) {
         console.error("Gagal submit:", error);
-        alert(error.reason || "Gagal mengirim submisi ke blockchain.");
+        alert(error.reason || "Failed to submit to blockchain.");
         return false;
       } finally {
         this.isLoading = false;
@@ -266,10 +266,10 @@ export const useWeb3Store = defineStore('web3', {
       try {
         const tx = await this.contract.finalizeProject(projectId);
         await tx.wait();
-        alert("Proyek telah difinalisasi!");
+        alert("Project has been finalized!");
         return true;
       } catch (error) {
-        alert(error.reason || "Gagal finalisasi.");
+        alert(error.reason || "Failed to finalize.");
         return false;
       } finally {
         this.isLoading = false;

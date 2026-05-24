@@ -25,16 +25,14 @@ const handleSign = async () => {
     const provider = new ethers.BrowserProvider(window.ethereum)
     const signer = await provider.getSigner()
     
-    // Menandatangani hash model sesuai standar EIP-191
-    // Ini yang akan diverifikasi oleh aggregator.py nantinya
     const sign = await signer.signMessage(ethers.getBytes(contentHash.value))
     
     signature.value = sign
     isSigned.value = true
-    alert("Signature berhasil dibuat secara lokal!")
+    alert("Signature created successfully!")
   } catch (error) {
     console.error("Signing failed", error)
-    alert("Gagal menandatangani data.")
+    alert("Failed to sign data.")
   } finally {
     web3Store.isLoading = false
   }
@@ -64,7 +62,7 @@ const handleSubmit = async () => {
             
             <div class="alert alert-warning py-2 small mb-4">
               <i class="bi bi-exclamation-triangle-fill me-2"></i>
-              Pastikan Anda telah melakukan <b>Local Training</b> dan memiliki CID serta Hash yang valid.
+              Ensure you have completed <b>Local Training</b> and have a valid CID and Hash.
             </div>
 
             <form @submit.prevent="handleSubmit">
@@ -74,15 +72,15 @@ const handleSubmit = async () => {
               </div>
 
               <div class="mb-3">
-                <label class="form-label small fw-bold">SUBMISSION PACKAGE CID (IPFS)</label>
-                <input v-model="modelCID" type="text" class="form-control" placeholder="QmPaketGabungan..." required :disabled="isSigned">
-                <div class="form-text extra-small text-primary">Masukkan Package CID (Kombinasi Model + VC) dari skrip Python.</div>
+                <label class="form-label small fw-bold">SUBMISSION PACKAGE CID</label>
+                <input v-model="modelCID" type="text" class="form-control" placeholder="Qm..." required :disabled="isSigned">
+                <div class="form-text extra-small text-primary">Package CID (Model + VC).</div>
               </div>
 
               <div class="mb-3">
                 <label class="form-label small fw-bold">CONTENT HASH (Keccak256)</label>
                 <input v-model="contentHash" type="text" class="form-control" placeholder="0x..." required :disabled="isSigned">
-                <div class="form-text extra-small text-primary">Masukkan data Hash Hex dari skrip Python.</div>
+                <div class="form-text extra-small text-primary">Hash of model.safetensors.</div>
               </div>
 
               <div v-if="isSigned" class="mb-3 p-3 bg-light border rounded">

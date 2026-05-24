@@ -11,9 +11,6 @@ def split_non_iid_alpaca(total_samples=5000, num_clients=5):
     random.shuffle(all_data)
     sampled_data = all_data[:total_samples]
 
-    print(f"--- Membagi Data secara Non-IID untuk {num_clients} Klien ---")
-    
-    # Simulasi Non-IID: Setiap klien mendapat jumlah data yang berbeda
     proportions = [0.10, 0.15, 0.20, 0.25, 0.30]
     
     start_idx = 0
@@ -25,9 +22,7 @@ def split_non_iid_alpaca(total_samples=5000, num_clients=5):
         with open(file_name, 'w') as f:
             json.dump(client_data, f, indent=4)
         
-        print(f"Klien {i+1}: {len(client_data)} sampel disimpan ke {file_name}")
         start_idx += num_samples
 
 if __name__ == "__main__":
-    # Anda bisa menyesuaikan jumlah sampel sesuai kemampuan PC lab
     split_non_iid_alpaca(total_samples=10000, num_clients=5)

@@ -21,7 +21,7 @@ watch(() => web3Store.contract, (newContract) => {
     <div v-if="web3Store.isConnected && !web3Store.isRegistered" class="alert alert-primary border-0 shadow-sm d-flex justify-content-between align-items-center">
       <div>
         <h5 class="alert-heading fw-bold">Identity Required!</h5>
-        <p class="mb-0">Alamat wallet Anda belum memiliki DID. Daftarkan sekarang untuk mulai berkontribusi.</p>
+        <p class="mb-0">Your wallet does not have a registered DID yet. Register now to start contributing.</p>
         <small class="text-muted">Generated ID: {{ web3Store.did }}</small>
       </div>
       <button @click="web3Store.doRegisterDID" class="btn btn-primary px-4">Register DID</button>

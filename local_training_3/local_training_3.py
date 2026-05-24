@@ -15,7 +15,6 @@ tokenizer.pad_token = tokenizer.eos_token # GPT-2 tidak punya pad token bawaan
 model = AutoModelForCausalLM.from_pretrained(MODEL_PATH)
 
 # 2. Load & Preprocess Dataset
-print("PROSES DATASET")
 def tokenize_function(examples):
     texts = [f"Instruction: {i}\nInput: {inp}\nOutput: {o}" 
              for i, inp, o in zip(examples['instruction'], examples['input'], examples['output'])]
@@ -35,7 +34,7 @@ training_args = TrainingArguments(
     per_device_train_batch_size=4,
     num_train_epochs=1, # 1 epoch untuk latihan lokal, bisa disesuaikan
     logging_steps=10,
-    save_strategy="no", # simpan manual
+    save_strategy="no", # Simpan manual
     learning_rate=5e-5,
     weight_decay=0.01,
 )
@@ -46,7 +45,6 @@ trainer = Trainer(
     train_dataset=tokenized_dataset,
 )
 
-print("START TRAINING")
 trainer.train()
 
 # 5. Simpan Update Model (Gradien/Bobot Baru)

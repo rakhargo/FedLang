@@ -60,7 +60,7 @@ watch(() => web3Store.contract, (newVal) => {
     <div class="d-flex justify-content-between align-items-end mb-4">
       <div>
         <h2 class="fw-bold mb-1">My Dashboard</h2>
-        <p class="text-muted mb-0">Kelola proyek yang Anda inisiasi atau ikuti.</p>
+        <p class="text-muted mb-0">Manage projects you initiated or joined.</p>
       </div>
       <button @click="loadAllData" class="btn btn-sm btn-outline-primary" :disabled="web3Store.isLoading">
         <i class="bi bi-arrow-clockwise me-1"></i> Refresh
@@ -89,7 +89,7 @@ watch(() => web3Store.contract, (newVal) => {
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
-      <p class="text-muted mt-3">Memuat data dari blockchain...</p>
+      <p class="text-muted mt-3">Loading data from blockchain...</p>
     </div>
 
     <!-- ======================== TAB: INITIATED ======================== -->
@@ -98,7 +98,7 @@ watch(() => web3Store.contract, (newVal) => {
       <div v-if="initiatedProjects.length === 0" class="card shadow-sm border-0 p-4 text-center">
         <div class="py-5">
           <i class="bi bi-folder2-open display-1 text-secondary d-block mb-3"></i>
-          <p class="text-muted mb-3">Anda belum menginisiasi proyek apapun.</p>
+          <p class="text-muted mb-3">You haven't initiated any projects yet.</p>
           <RouterLink to="/create" class="btn btn-primary">
             <i class="bi bi-plus-lg me-2"></i>Create New Project
           </RouterLink>
@@ -151,7 +151,7 @@ watch(() => web3Store.contract, (newVal) => {
       <div v-if="participatingProjects.length === 0" class="card shadow-sm border-0 p-4 text-center">
         <div class="py-5">
           <i class="bi bi-search display-1 text-secondary d-block mb-3"></i>
-          <p class="text-muted mb-3">Anda belum bergabung ke proyek manapun.</p>
+          <p class="text-muted mb-3">You haven't joined any projects yet.</p>
           <RouterLink to="/" class="btn btn-primary">
             <i class="bi bi-globe me-2"></i>Explore Global Projects
           </RouterLink>

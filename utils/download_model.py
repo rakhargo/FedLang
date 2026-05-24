@@ -5,8 +5,6 @@ import os
 MODEL_ID = "openai-community/gpt2"
 LOCAL_DIR = "./models"
 
-
-# Hanya izinkan file yang benar-benar dibutuhkan untuk Fine-Tuning & Inference
 allow_patterns = [
     "config.json",           # Konfigurasi arsitektur model
     "model.safetensors",     # Bobot model (format aman & cepat)
@@ -14,7 +12,7 @@ allow_patterns = [
     "tokenizer.json",        # Definisi tokenizer
     "tokenizer_config.json", # Konfigurasi tokenizer
     "vocab.json",            # Kosakata model
-    "merges.txt",           # Aturan penggabungan token (khusus GPT-2)
+    "merges.txt",            # Aturan penggabungan token (khusus GPT-2)
     "special_tokens_map.json"
 ]
 

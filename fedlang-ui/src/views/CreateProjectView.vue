@@ -14,7 +14,7 @@ const budget = ref('')
 
 const handleSubmit = async () => {
   if (!budget.value || budget.value <= 0) {
-    alert("Silakan masukkan budget yang valid.");
+    alert("Please enter a valid budget.");
     return;
   }
   
@@ -102,7 +102,7 @@ const handleSubmit = async () => {
                   >
                   <span class="input-group-text font-monospace">SEP ETH</span>
                 </div>
-                <div class="form-text">Dana ini akan dikunci di kontrak untuk insentif partisipan.</div>
+                <div class="form-text">Funds will be locked in the contract as participant incentives.</div>
               </div>
 
               <!-- Info Panel -->
@@ -110,8 +110,7 @@ const handleSubmit = async () => {
                 <div class="d-flex gap-3 text-primary">
                   <i class="bi bi-info-circle-fill fs-5"></i>
                   <small>
-                    Dengan membuat proyek ini, Anda bertindak sebagai <b>Inisiator</b>. 
-                    Anda bertanggung jawab untuk memicu agregasi ronde setelah partisipan mencukupi.
+                    By creating this project, you act as the <b>Initiator</b> and are responsible for triggering round aggregation.
                   </small>
                 </div>
               </div>

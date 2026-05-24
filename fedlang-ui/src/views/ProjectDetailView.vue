@@ -124,7 +124,7 @@ watch(() => web3Store.contract, (newVal) => {
             >
               Withdraw to Wallet
             </button>
-            <p v-else class="extra-small text-muted mb-0">Reward akan tersedia setelah ronde difinalisasi.</p>
+            <p v-else class="extra-small text-muted mb-0">Rewards will be available after the round is finalized.</p>
           </div>
         </div>
 
@@ -136,22 +136,22 @@ watch(() => web3Store.contract, (newVal) => {
               <div class="p-3 bg-light border rounded-3 mb-3">
                 <i class="bi bi-shield-lock text-primary fs-3 d-block mb-2"></i>
                 <span class="text-dark fw-bold">Initiator Authority</span>
-                <p class="extra-small text-muted mb-0 mt-1">Anda bertanggung jawab untuk memicu agregasi saat kuota terpenuhi.</p>
+                <p class="extra-small text-muted mb-0 mt-1">You are responsible for triggering aggregation when quorum is met.</p>
               </div>
               <div v-if="project.isActive" class="alert alert-warning small border-0">
-                Gunakan skrip <b>aggregator.py</b> untuk memproses ronde secara otomatis.
+                Use <b>aggregator.py</b> script to process rounds automatically.
               </div>
             </div>
 
             <div v-else-if="!project.isUserJoined && project.isActive" class="d-grid gap-3">
               <div class="alert alert-info small border-0 m-0">
-                Bergabunglah untuk berkontribusi dan dapatkan insentif ETH berdasarkan kualitas model Anda.
+                Join to contribute and earn ETH incentives based on your model quality.
               </div>
               <button @click="handleJoin" class="btn btn-primary btn-lg fw-bold shadow-sm" :disabled="!web3Store.isRegistered">
                 Join Research Group
               </button>
               <small v-if="!web3Store.isRegistered" class="text-danger text-center">
-                * Daftarkan DID Anda terlebih dahulu di sidebar.
+                * Register your DID first in the sidebar.
               </small>
             </div>
 
@@ -160,7 +160,7 @@ watch(() => web3Store.contract, (newVal) => {
                 <i class="bi bi-cloud-check-fill text-info fs-3 d-block mb-2"></i>
                 <span class="text-info fw-bold">Contribution Stored</span>
                 <p class="extra-small text-muted mb-0 mt-1">
-                  Anda telah mengirimkan update model untuk ronde ini. Silakan tunggu finalisasi ronde oleh inisiator.
+                  You have submitted your model update for this round. Waiting for round finalization.
                 </p>
               </div>
 

@@ -72,14 +72,13 @@ def issue_verifiable_credential(client_address, client_did):
     subject_string = f"{client_did}:{client_address.lower()}:VerifiedGlobalContributor"
     message = encode_defunct(text=subject_string)
     
-    # Menandatangani subjek menggunakan Kunci Privat Admin (Platform Identity Provider)
     signed_message = Account.sign_message(message, private_key=ADMIN_PRIVATE_KEY)
     signature_hex = signed_message.signature.hex()
     
-    # Menyusun struktur dokumen JSON VC resmi
+    # Menyusun struktur dokumen JSON VC (mock)
     vc_document = {
         "context": ["https://www.w3.org/2018/credentials/v1"],
-        "id": f"https://fedlang.id/credentials/{client_address.lower()}", # hanya contoh
+        "id": f"https://fedlang.id/credentials/{client_address.lower()}", # example
         "type": ["VerifiableCredential", "FedLangVerifiedHumanCredential"],
         "issuer": f"did:ethr:{admin_account.address.lower()}",
         "issuanceDate": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
