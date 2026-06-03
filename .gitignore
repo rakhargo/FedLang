@@ -4,5 +4,5 @@ global_model_updated.safetensors
 utils/models
 local_training_*/gpt2
 local_training_*/output_client_*
-skripsi_text_output.txt
+skripsi_*.txt
 *.pdf

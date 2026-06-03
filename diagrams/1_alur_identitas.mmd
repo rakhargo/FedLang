@@ -1,0 +1,23 @@
+sequenceDiagram
+    participant C as Client
+    participant UI as Web UI
+    participant SC as Smart Contract
+    participant PA as Platform Admin
+
+    Note over C,PA: Fase Registrasi
+    C->>UI: Connect MetaMask
+    UI->>UI: Generate did:key dari wallet address
+    UI->>SC: registerDID(did:key)
+    SC->>SC: Validasi: wallet belum punya DID
+    SC->>SC: Validasi: DID belum diklaim
+    SC-->>UI: DID terdaftar on-chain
+
+    Note over C,PA: Fase Verifikasi
+    PA->>PA: Verifikasi profil partisipan (off-chain)
+    PA->>SC: verifyParticipant(address)
+    SC-->>SC: isVerified = true
+    PA->>PA: Sign VC (ECDSA secp256k1)
+    PA-->>C: Kirim file platform_credential.json
+
+    Note over C,PA: Hasil
+    Note right of C: Client memiliki:<br/>1. DID terdaftar on-chain<br/>2. Status isVerified = true<br/>3. File VC bertanda tangan

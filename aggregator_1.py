@@ -14,7 +14,7 @@ load_dotenv()
 
 # === Konfigurasi Utama ===
 RPC_URL = os.getenv("ANKR_SEPOLIA_RPC_URL") 
-CONTRACT_ADDRESS = "0xAc4f998dC647f8dBA4Ad9b6Bd5F0C1F3a83EA33b"  # Alamat kontrak pintar FedLang Anda
+CONTRACT_ADDRESS = "0x9a50ec0A284Aa2722D18BfF8FC714a0220C15656"  # Alamat kontrak pintar FedLang Anda
 PROJECT_ID = 1
 PRIVATE_KEY = os.getenv("INIT_PRIVATE_KEY")  # Kunci privat Inisiator Proyek untuk panggil finalizeRound
 PLATFORM_ADMIN_ADDRESS = "0xadf00a2476c77163B607af6E55A6a90185ae33f6"  # Kunci publik Tim FedLang untuk verifikasi VC
@@ -25,7 +25,7 @@ POLL_INTERVAL = 10
 # --- KONFIGURASI AUTOMATION & CHUNKING ---
 STATE_FILE = f"state_project_{PROJECT_ID}.json"
 CHUNK_SIZE = 2000 
-START_BLOCK_DEFAULT = 10856286 
+START_BLOCK_DEFAULT = 10975295 
 
 w3 = Web3(Web3.HTTPProvider(RPC_URL))
 with open(ABI_PATH) as f:

@@ -8,7 +8,7 @@ export const useWeb3Store = defineStore('web3', {
     address: null,
     isConnected: false,
     isLoading: false, // Indikator loading global
-    contractAddress: "0xAc4f998dC647f8dBA4Ad9b6Bd5F0C1F3a83EA33b", 
+    contractAddress: "0x9a50ec0A284Aa2722D18BfF8FC714a0220C15656", 
     contract: null,
     did: null,
     isRegistered: false,
@@ -39,7 +39,6 @@ export const useWeb3Store = defineStore('web3', {
         // Inisialisasi Kontrak agar bisa dipanggil fungsinya
         this.contract = new ethers.Contract(this.contractAddress, contractAbi.abi, signer)
         
-        // Generate DID sederhana (Sesuai riset did:key kita)
         // this.did = `did:key:z6M(address)...`
         
         // Cek status registrasi di blockchain
@@ -201,6 +200,9 @@ export const useWeb3Store = defineStore('web3', {
         const contribution = await this.contract.contributions(projectId, p.roundNumber, this.address);
         const hasSubmitted = contribution.exists; // Field 'exists' dari struct Contribution
 
+        // Read participantCount directly from the Project struct returned by the contract
+        const joinedCount = p.participantCount ? p.participantCount.toString() : (p[9] ? p[9].toString() : "0");
+
         return {
           id: projectId,
           initiator: p.initiator,
@@ -211,6 +213,7 @@ export const useWeb3Store = defineStore('web3', {
           currentRound: p.roundNumber.toString(),
           isActive: p.isActive,
           submissionCount: roundData.submissionCount.toString(),
+          joinedCount: joinedCount,
           isUserJoined: isUserJoined,
           hasSubmitted: hasSubmitted,
           totalBudget: ethers.formatEther(p.totalBudget),

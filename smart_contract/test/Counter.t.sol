@@ -1,24 +1,39 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
 import {Test} from "forge-std/Test.sol";
-import {Counter} from "../src/Counter.sol";
+import {FederatedHub} from "../src/FederatedHub.sol";
 
-contract CounterTest is Test {
-    Counter public counter;
+contract FederatedHubTest is Test {
+    FederatedHub public hub;
+    address public admin = address(0x1);
+    address public alice = address(0x2);
+    address public bob = address(0x3);
 
     function setUp() public {
-        counter = new Counter();
-        counter.setNumber(0);
+        vm.prank(admin);
+        hub = new FederatedHub();
     }
 
-    function test_Increment() public {
-        counter.increment();
-        assertEq(counter.number(), 1);
+    function test_RegisterDID() public {
+        vm.startPrank(alice);
+        hub.registerDID("did:key:alice");
+        
+        (string memory did, bool isRegistered, bool isVerified) = hub.participants(alice);
+        assertEq(did, "did:key:alice");
+        assertTrue(isRegistered);
+        assertFalse(isVerified);
+        vm.stopPrank();
     }
 
-    function testFuzz_SetNumber(uint256 x) public {
-        counter.setNumber(x);
-        assertEq(counter.number(), x);
+    function test_VerifyParticipant() public {
+        vm.prank(alice);
+        hub.registerDID("did:key:alice");
+
+        vm.prank(admin);
+        hub.verifyParticipant(alice);
+
+        (, , bool isVerified) = hub.participants(alice);
+        assertTrue(isVerified);
     }
 }

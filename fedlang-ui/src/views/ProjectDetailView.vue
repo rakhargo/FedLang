@@ -82,7 +82,7 @@ watch(() => web3Store.contract, (newVal) => {
               </div>
               <div class="col border-end">
                 <small class="text-muted d-block text-uppercase extra-small fw-bold">Submissions</small>
-                <span class="fs-4 fw-bold text-primary">{{ project.submissionCount }} / 3</span>
+                <span class="fs-4 fw-bold text-primary">{{ project.submissionCount }} / {{ project.joinedCount || '0' }}</span>
               </div>
               <div class="col ">
                 <small class="text-muted d-block text-uppercase extra-small fw-bold">Project Funds (Total / Remaining)</small>
