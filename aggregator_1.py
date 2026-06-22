@@ -14,7 +14,7 @@ load_dotenv()
 
 # === Konfigurasi Utama ===
 RPC_URL = os.getenv("ANKR_SEPOLIA_RPC_URL") 
-CONTRACT_ADDRESS = "0x9a50ec0A284Aa2722D18BfF8FC714a0220C15656"  # Alamat kontrak pintar FedLang Anda
+CONTRACT_ADDRESS = "0x0779E41584F22cdbcFab337a721163890651d41e"  # Alamat kontrak pintar FedLang Anda
 PROJECT_ID = 1
 PRIVATE_KEY = os.getenv("INIT_PRIVATE_KEY")  # Kunci privat Inisiator Proyek untuk panggil finalizeRound
 PLATFORM_ADMIN_ADDRESS = "0xadf00a2476c77163B607af6E55A6a90185ae33f6"  # Kunci publik Tim FedLang untuk verifikasi VC

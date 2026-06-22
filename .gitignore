@@ -6,3 +6,4 @@ local_training_*/gpt2
 local_training_*/output_client_*
 skripsi_*.txt
 *.pdf
+.agents/*

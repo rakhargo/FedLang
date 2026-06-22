@@ -45,6 +45,7 @@ contract FederatedHub {
         uint256 startTime;
         uint256 submissionCount;
         bool finalized;
+        uint256 minQuotaReachedTime;
     }
 
     // Struct storing participant DID and platform verification status
@@ -189,6 +190,9 @@ contract FederatedHub {
         });
 
         projectRounds[_projectId][curRound].submissionCount++;
+        if (projectRounds[_projectId][curRound].submissionCount == MIN_CLIENTS) {
+            projectRounds[_projectId][curRound].minQuotaReachedTime = block.timestamp;
+        }
         emit ContributionSubmitted(_projectId, curRound, msg.sender);
     }
 
@@ -202,7 +206,12 @@ contract FederatedHub {
         bool hasMinQuota = r.submissionCount >= MIN_CLIENTS;
         bool isFullHouse = r.submissionCount >= TOTAL_CLIENTS;
 
-        return isFullHouse || hasMinQuota;
+        bool timeElapsed = false;
+        if (hasMinQuota && r.minQuotaReachedTime != 0) {
+            timeElapsed = block.timestamp >= r.minQuotaReachedTime + 24 hours;
+        }
+
+        return isFullHouse || (hasMinQuota && timeElapsed);
     }
 
     /**

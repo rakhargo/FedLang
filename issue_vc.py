@@ -10,7 +10,7 @@ load_dotenv()
 
 # === Konfigurasi Jaringan & Kontrak ===
 RPC_URL = os.getenv("ANKR_SEPOLIA_RPC_URL")
-CONTRACT_ADDRESS = "0x9a50ec0A284Aa2722D18BfF8FC714a0220C15656"
+CONTRACT_ADDRESS = "0x0779E41584F22cdbcFab337a721163890651d41e"
 ABI_PATH = "./FederatedHub.json"
 
 # Kunci Privat Tim FedLang selaku Platform Admin / Issuer Global

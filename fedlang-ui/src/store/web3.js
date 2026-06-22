@@ -8,7 +8,7 @@ export const useWeb3Store = defineStore('web3', {
     address: null,
     isConnected: false,
     isLoading: false, // Indikator loading global
-    contractAddress: "0x9a50ec0A284Aa2722D18BfF8FC714a0220C15656", 
+    contractAddress: "0x0779E41584F22cdbcFab337a721163890651d41e", 
     contract: null,
     did: null,
     isRegistered: false,
