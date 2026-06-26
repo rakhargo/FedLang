@@ -4,6 +4,6 @@ global_model_updated.safetensors
 utils/models
 local_training_*/gpt2
 local_training_*/output_client_*
-skripsi_*.txt
+*.txt
 *.pdf
 .agents/*
